@@ -166,6 +166,7 @@ class DParser
         $this->initializeOperators();
         $this->sourceString = $source;
         $this->length = strlen($source);
+        
         try
         {
             $this->roll();
