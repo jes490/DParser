@@ -1,0 +1,30 @@
+{
+    "name": "jes490/dparser",
+    "description": "Simple Dice Roller for Laravel 5.5",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jes490",
+            "email": "aseselkin@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "autoload" : {
+        "psr-4": {
+            "App\\": "app/",
+            "Jes490\\DParser\\": "packages/jes490/dparser/src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jes490\\DParser\\DParserServiceProvider"
+            ],
+            "aliases": {
+                "DParser": "Jes490\\DParser\\Facade\\DParser"
+            }
+        }
+    }
+}
