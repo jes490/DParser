@@ -4,10 +4,21 @@ namespace Jes490\DParser;
 
 use Jes490\DParser\Exceptions\DParseException;
 
+/**
+ * Class DParser
+ * @package Jes490\DParser
+ */
 class DParser
 {
+    /**
+     * List of supported operators.
+     * @var array
+     */
     protected $operators = [];
 
+    /**
+     * Operators Initialization.
+     */
     protected function initializeOperators()
     {
         $this->operators['+'] = $this->plusOperator();
@@ -17,38 +28,63 @@ class DParser
         $this->operators['d'] = $this->diceOperator();
     }
 
-    protected function plusOperator()
+    /**
+     * Plus Operator Settings
+     * @return array
+     */
+    private function plusOperator()
     {
         return [
-            "precedence" => 1, "exec" => function ($a, $b) { return $a + $b; }
+            "precedence" => 1,
+            "exec" => function ($a, $b) { return $a + $b; }
         ];
     }
 
-    protected function minusOperator()
+    /**
+     * Minus Operator Settings
+     * @return array
+     */
+    private function minusOperator()
     {
         return [
-            "precedence" => 1, "exec" => function ($a, $b) { return $a - $b; }
+            "precedence" => 1,
+            "exec" => function ($a, $b) { return $a - $b; }
         ];
     }
 
-    protected function multiplyOperator()
+    /**
+     * Multiply Operator Settings
+     * @return array
+     */
+    private function multiplyOperator()
     {
         return [
-            "precedence" => 2, "exec" => function ($a, $b) { return $a * $b; }
+            "precedence" => 2,
+            "exec" => function ($a, $b) { return $a * $b; }
         ];
     }
 
-    protected function divideOperator()
+    /**
+     * Division Operator Settings
+     * @return array
+     */
+    private function divideOperator()
     {
         return [
-            "precedence" => 2, "exec" => function ($a, $b) { return $a / $b; }
+            "precedence" => 2,
+            "exec" => function ($a, $b) { return $a / $b; }
         ];
     }
 
-    protected function diceOperator()
+    /**
+     * Dice Operator Settings
+     * @return array
+     */
+    private function diceOperator()
     {
         return [
-            "precedence" => 3, "exec" => function ($rolls, $sides, $roll)
+            "precedence" => 3,
+            "exec" => function ($rolls, $sides, $instance)
             {
                 if ($rolls > 100)
                     throw new DParseException("Maximum allowed throws is 100.");
@@ -56,7 +92,7 @@ class DParser
                 while ($rolls--) {
                     $resultRoll = rand(1, $sides);
                     $resultTotal += $resultRoll;
-                    array_push($roll->rolls, $resultRoll);
+                    array_push($instance->rolls, $resultRoll);
                 }
 
                 return $resultTotal;
@@ -64,48 +100,106 @@ class DParser
         ];
     }
 
+    /**
+     * Ignorable Characters
+     * @var array
+     */
     protected $whitespaces = [
         ' '     => true,
         '\t'    => true,
     ];
 
-    protected $numbersStack = [];
+    /**
+     * Stack of Expression's Numbers
+     * @var array
+     */
+    private $numbersStack = [];
 
-    protected $operatorsStack = [];
+    /**
+     * Stack of Expression's Operators
+     * @var array
+     */
+    private $operatorsStack = [];
 
-    protected $position = 0;
+    /**
+     * Current Position Index
+     * @var int
+     */
+    private $position = 0;
 
-    protected $lookahead = '';
+    /**
+     * Current Position Character
+     * @var string
+     */
+    private $lookahead = '';
 
-    protected $sourceString;
+    /**
+     * Original String
+     * @var string
+     */
+    private $sourceString;
 
-    protected $length;
+    /**
+     * Length of Expression
+     * @var int
+     */
+    private $length;
 
+    /**
+     * Results of all the Rolls
+     * @var array
+     */
     public $rolls = [];
 
+    /**
+     * Total Result of Expression
+     * @var
+     */
     public $result;
 
-    public function __construct(string $source)
+    /**
+     * DParser constructor. Initialize all data and roll expression.
+     * @param string $source
+     */
+    public function __construct(string $source = '')
     {
         $this->initializeOperators();
         $this->sourceString = $source;
         $this->length = strlen($source);
-        $this->roll();
+        try
+        {
+            $this->roll();
+        }
+        catch (DParseException $exception)
+        {
+            $this->errorHandler($exception);
+        }
+
     }
 
+    /**
+     * Returns Total Result of Expression
+     * @return string
+     */
     public function __toString() : string
     {
-        return $this->numbersStack[0];
+        return $this->result;
     }
 
-    protected function roll()
+    /**
+     * Parser Exception Handler.
+     * @param $exception
+     */
+    protected function errorHandler($exception)
     {
-        $this->tokenize();
-        $this->executeAll();
-        $this->result = $this->numbersStack[0];
+        $this->result = $exception->message;
     }
 
-    protected function tokenize()
+    /**
+     * Tokenize all characters. Populates numbers stack and operators stack.
+     * @throws DParseException
+     */
+    private function tokenize()
     {
         //check all symbols
         for ( ; $this->position < $this->length; $this->position++)
@@ -135,7 +229,12 @@ class DParser
         }
     }
 
-    protected function nextToken()
+    /**
+     * Returns next token from the expression string.
+     * @return array
+     * @throws DParseException
+     */
+    private function nextToken()
     {
         $symbol     = $this->lookahead;
         $token      = ['value' => $symbol];
@@ -165,7 +264,12 @@ class DParser
         return $token;
     }
 
-    protected function fetchNumber()
+    /**
+     * Fetches number from the expression string.
+     * @return array
+     * @throws DParseException
+     */
+    private function fetchNumber()
     {
         $offset = 0;
         $number = '';
@@ -186,20 +290,30 @@ class DParser
         return ['value' => intval($number), 'length' => $offset-1];
     }
 
-    protected function executeAll()
+    /**
+     * Executes Expression.
+     */
+    private function roll()
     {
+        $this->tokenize();
         //while stack is not empty
         while ( $idx = count($this->operatorsStack) )
         {
             //cycle each operator in stack from right to left
             while ( --$idx >= 0 )
             {
-                $this->execute($this->operatorsStack[$idx], $idx);
+                $this->tryExecute($this->operatorsStack[$idx], $idx);
             }
         }
+        $this->result = $this->numbersStack[0];
     }
 
-    protected function execute($token, $index)
+    /**
+     * Tries to execute given operator.
+     * @param $operator
+     * @param $index
+     */
+    private function tryExecute($operator, $index)
     {
         //if not last operator
         if ($index+1 < count($this->operatorsStack))
@@ -207,19 +321,23 @@ class DParser
             //compare pair of operators, if right one's precedence bigger, execute it
             //else skip it to the first index and execute first
             $last = $this->operatorsStack[$index+1];
-            if ($last['precedence'] > $token['precedence'])
-                $this->operate($index+1);
+            if ($last['precedence'] > $operator['precedence'])
+                $this->execute($index+1);
             else if ($index == 0)
-                $this->operate($index);
+                $this->execute($index);
         }
         //else just execute it
         else if ($index == 0)
-            $this->operate($index);
+            $this->execute($index);
         else
             throw DParseException("Internal Error.");
     }
 
-    protected function operate($index)
+    /**
+     * Executes given operator with corresponding operands.
+     * @param $index
+     */
+    private function execute($index)
     {
         //find corresponding operands [first operand, second operand, this object]
         $couplet = array_slice($this->numbersStack, $index, $index+2);
