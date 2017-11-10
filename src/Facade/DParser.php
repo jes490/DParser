@@ -10,4 +10,9 @@ class DParser extends Facade
     {
         return \Jes490\DParser\DParser::class;
     }
+
+    public static function roll(string $string)
+    {
+        return new \Jes490\DParser\DParser($string);
+    }
 }
