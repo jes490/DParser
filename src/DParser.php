@@ -93,7 +93,7 @@ class DParser
 
     public function __toString() : string
     {
-        return $this->numberStack[0];
+        return $this->numbersStack[0];
     }
 
     protected function roll()
