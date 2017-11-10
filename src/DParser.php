@@ -2,6 +2,8 @@
 
 namespace Jes490\DParser;
 
+use Jes490\DParser\Exceptions\DParseException;
+
 class DParser
 {
     protected $operators = [];

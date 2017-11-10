@@ -1,6 +1,6 @@
 <?php
 
-namespace Jes490\DParser;
+namespace Jes490\DParser\Exceptions;
 
 use Exception;
 
