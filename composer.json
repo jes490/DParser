@@ -10,11 +10,9 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {},
     "autoload" : {
         "psr-4": {
-            "App\\": "app/",
-            "Jes490\\DParser\\": "packages/jes490/dparser/src"
+            "Jes490\\DParser\\": "src"
         }
     },
     "extra": {
