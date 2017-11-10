@@ -26,7 +26,10 @@ class DParserServiceProvider extends ServiceProvider
         //
         $this->app->bind(DParser::class, function ($app, array $parameters)
         {
-            return new DParser($parameters[0]);
+            if (count($parameters) > 0)
+                return new DParser($parameters[0]);
+            else
+                throw new InvalidArgumentException('At least one argument needed.');
         });
     }
 }
