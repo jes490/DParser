@@ -9,7 +9,10 @@
             "email": "aseselkin@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
+    "config": {
+        "bin-dir": "vendor/bin"
+    },
+    "minimum-stability": "dev",
     "autoload" : {
         "psr-4": {
             "Jes490\\DParser\\": "src"
@@ -24,5 +27,8 @@
                 "DParser": "Jes490\\DParser\\Facade\\DParser"
             }
         }
+    },
+    "require-dev": {
+        "phpspec/phpspec": "^4.2@dev"
     }
 }

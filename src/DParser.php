@@ -92,7 +92,7 @@ class DParser
                 while ($rolls--) {
                     $resultRoll = rand(1, $sides);
                     $resultTotal += $resultRoll;
-                    array_push($instance->rolls, $resultRoll);
+                    $instance->rolls[] = $resultRoll;
                 }
 
                 return $resultTotal;
@@ -146,27 +146,27 @@ class DParser
     private $length;
 
     /**
-     * Results of all the Rolls
-     * @var array
-     */
-    public $rolls = [];
-
-    /**
      * Total Result of Expression
      * @var
      */
-    public $result;
+    private $result;
+
+    /**
+     * Results of all the Rolls
+     * @var array
+     */
+    private $rolls = [];
 
     /**
      * DParser constructor. Initialize all data and roll expression.
      * @param string $source
      */
-    public function __construct(string $source = '')
+    public function __construct(string $source)
     {
         $this->initializeOperators();
         $this->sourceString = $source;
         $this->length = strlen($source);
-        
+
         try
         {
             $this->roll();
@@ -184,7 +184,26 @@ class DParser
      */
     public function __toString() : string
     {
+        return $this->getResult();
+    }
+
+
+    /**
+     * Get expression result
+     * @return mixed
+     */
+    public function getResult()
+    {
         return $this->result;
+    }
+
+    /**
+     * Get all rolls
+     * @return array
+     */
+    public function getRolls()
+    {
+        return array_reverse($this->rolls);
     }
 
     /**
@@ -193,7 +212,7 @@ class DParser
      */
     protected function errorHandler($exception)
     {
-        $this->result = $exception->message;
+        $this->result = $exception->getMessage();
     }
 
     /**
@@ -306,7 +325,10 @@ class DParser
                 $this->tryExecute($this->operatorsStack[$idx], $idx);
             }
         }
-        $this->result = $this->numbersStack[0];
+        if (count($this->numbersStack) > 0)
+            $this->result = $this->numbersStack[0];
+        else
+            $this->result = '';
     }
 
     /**
@@ -330,8 +352,6 @@ class DParser
         //else just execute it
         else if ($index == 0)
             $this->execute($index);
-        else
-            throw DParseException("Internal Error.");
     }
 
     /**
@@ -341,7 +361,7 @@ class DParser
     private function execute($index)
     {
         //find corresponding operands [first operand, second operand, this object]
-        $couplet = array_slice($this->numbersStack, $index, $index+2);
+        $couplet = array_slice($this->numbersStack, $index, 2);
         $couplet[] = $this;
         //remove operator from stack and return corresponding closure
         $operator = $this->operators[array_splice($this->operatorsStack, $index, 1)[0]['value']];
