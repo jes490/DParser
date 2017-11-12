@@ -15,7 +15,7 @@ If you don't use Package Auto-Discovery, simply add next provider to providers a
 Jes490\DParser\DParserServiceProvider::class,
 ```
 
-And if you want to use Facade, add this to your aliases array in config/app.php:
+And if you want use Facade, add this to your aliases array in config/app.php:
 ```
 'DParser' => Jes490\DParser\Facade\DParser::class,
 ```
@@ -28,10 +28,10 @@ DParser::roll($expression);
 
 //You can assess result of your expression like this:
 DParser::roll($expression)->getResult();
-//Or just use auto-conversion __toString()
+//Or just use plain auto-conversion __toString()
 DParser::roll('2+2'); //returns '4';
 
-//You can access expression rolls:
+//You can access individual rolls like this:
 DParser::roll('2d6')->getRolls(); //returns array of rolls results
 ```
 
