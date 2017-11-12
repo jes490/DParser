@@ -24,7 +24,7 @@
                 "Jes490\\DParser\\DParserServiceProvider"
             ],
             "aliases": {
-                "DParser": "Jes490\\DParser\\Facade\\DParser"
+                "DParser": "Jes490\\DParser\\Facades\\DParser"
             }
         }
     },

@@ -29,7 +29,7 @@ class DParserServiceProvider extends ServiceProvider
             if (count($parameters) > 0)
                 return new DParser($parameters[0]);
             else
-                throw new InvalidArgumentException('At least one argument needed.');
+                return new DParser('');
         });
     }
 }
