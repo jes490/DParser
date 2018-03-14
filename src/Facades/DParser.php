@@ -11,18 +11,5 @@ class DParser extends Facade
         return \Jes490\DParser\DParser::class;
     }
 
-    public static function roll(string $string)
-    {
-        return new \Jes490\DParser\DParser($string);
-    }
 
-    public static function getResult(string $string = '')
-    {
-        return (new \Jes490\DParser\DParser($string))->getResult();
-    }
-
-    public static function getRolls(string $string = '')
-    {
-        return (new \Jes490\DParser\DParser($string))->getRolls();
-    }
 }

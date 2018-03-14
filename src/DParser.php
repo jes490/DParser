@@ -11,94 +11,11 @@ use Jes490\DParser\Exceptions\DParseException;
 class DParser
 {
     /**
-     * List of supported operators.
-     * @var array
+     * OperatorFactory.
+     *
+     * @var OperatorFactory
      */
-    protected $operators = [];
-
-    /**
-     * Operators Initialization.
-     */
-    protected function initializeOperators()
-    {
-        $this->operators['+'] = $this->plusOperator();
-        $this->operators['-'] = $this->minusOperator();
-        $this->operators['/'] = $this->divideOperator();
-        $this->operators['*'] = $this->multiplyOperator();
-        $this->operators['d'] = $this->diceOperator();
-    }
-
-    /**
-     * Plus Operator Settings
-     * @return array
-     */
-    private function plusOperator()
-    {
-        return [
-            "precedence" => 1,
-            "exec" => function ($a, $b) { return $a + $b; }
-        ];
-    }
-
-    /**
-     * Minus Operator Settings
-     * @return array
-     */
-    private function minusOperator()
-    {
-        return [
-            "precedence" => 1,
-            "exec" => function ($a, $b) { return $a - $b; }
-        ];
-    }
-
-    /**
-     * Multiply Operator Settings
-     * @return array
-     */
-    private function multiplyOperator()
-    {
-        return [
-            "precedence" => 2,
-            "exec" => function ($a, $b) { return $a * $b; }
-        ];
-    }
-
-    /**
-     * Division Operator Settings
-     * @return array
-     */
-    private function divideOperator()
-    {
-        return [
-            "precedence" => 2,
-            "exec" => function ($a, $b) { return $a / $b; }
-        ];
-    }
-
-    /**
-     * Dice Operator Settings
-     * @return array
-     */
-    private function diceOperator()
-    {
-        return [
-            "precedence" => 3,
-            "exec" => function ($rolls, $sides, $instance)
-            {
-                if ($rolls > 100)
-                    throw new DParseException("Maximum allowed throws is 100.");
-                $resultTotal = 0;
-                while ($rolls--) {
-                    $resultRoll = rand(1, $sides);
-                    $resultTotal += $resultRoll;
-                    $instance->rolls[] = $resultRoll;
-                }
-
-                return $resultTotal;
-            }
-        ];
-    }
+    protected $operatorFactory;
 
     /**
      * Ignorable Characters
@@ -113,97 +30,83 @@ class DParser
      * Stack of Expression's Numbers
      * @var array
      */
-    private $numbersStack = [];
+    public $numbersStack = [];
 
     /**
      * Stack of Expression's Operators
      * @var array
      */
-    private $operatorsStack = [];
+    public $operatorsStack = [];
 
     /**
      * Current Position Index
      * @var int
      */
-    private $position = 0;
+    public $position = 0;
 
     /**
      * Current Position Character
      * @var string
      */
-    private $lookahead = '';
+    public $lookahead = '';
 
     /**
      * Original String
      * @var string
      */
-    private $sourceString;
+    public $sourceString;
 
     /**
      * Length of Expression
      * @var int
      */
-    private $length;
+    public $length;
 
     /**
      * Total Result of Expression
      * @var
      */
-    private $result;
+    public $result;
 
     /**
      * Results of all the Rolls
      * @var array
      */
-    private $rolls = [];
+    public $rolls = [];
 
     /**
      * DParser constructor. Initialize all data and roll expression.
-     * @param string $source
+     * @param OperatorFactory $factory
      */
-    public function __construct(string $source)
+    public function __construct(OperatorFactory $factory)
     {
-        $this->initializeOperators();
+        $this->operatorFactory = $factory;
+    }
+
+    /**
+     * Executes Expression.
+     */
+    public function roll($source)
+    {
         $this->sourceString = $source;
         $this->length = strlen($source);
 
-        try
+        $this->tokenize();
+        //while stack is not empty
+        while ( $idx = count($this->operatorsStack) )
         {
-            $this->roll();
+            //cycle each operator in stack from right to left
+            while ( --$idx >= 0 )
+            {
+                $this->tryExecute($this->operatorsStack[$idx], $idx);
+            }
         }
-        catch (DParseException $exception)
-        {
-            $this->errorHandler($exception);
-        }
+        if (count($this->numbersStack) > 0)
+            $this->result = $this->numbersStack[0];
+        else
+            $this->result = '';
 
-    }
-
-    /**
-     * Returns Total Result of Expression
-     * @return string
-     */
-    public function __toString() : string
-    {
-        return $this->getResult();
-    }
-
-
-    /**
-     * Get expression result
-     * @return mixed
-     */
-    public function getResult()
-    {
-        return $this->result;
-    }
-
-    /**
-     * Get all rolls
-     * @return array
-     */
-    public function getRolls()
-    {
-        return array_reverse($this->rolls);
+        return intval((string) $this);
     }
 
     /**
@@ -272,10 +175,10 @@ class DParser
             $this->position += $number['length'];
         }
         //then it's operator
-        else if (array_key_exists($symbol, $this->operators))
+        else if ($operator = $this->operatorFactory->operator($symbol))
         {
             $token['type'] = 'operator';
-            $token['precedence'] = $this->operators[$symbol]['precedence'];
+            $token['precedence'] = $operator->precedence;
         }
         //if it's neither, then throw exception
         else
@@ -311,27 +214,6 @@ class DParser
     }
 
     /**
-     * Executes Expression.
-     */
-    private function roll()
-    {
-        $this->tokenize();
-        //while stack is not empty
-        while ( $idx = count($this->operatorsStack) )
-        {
-            //cycle each operator in stack from right to left
-            while ( --$idx >= 0 )
-            {
-                $this->tryExecute($this->operatorsStack[$idx], $idx);
-            }
-        }
-        if (count($this->numbersStack) > 0)
-            $this->result = $this->numbersStack[0];
-        else
-            $this->result = '';
-    }
-
-    /**
      * Tries to execute given operator.
      * @param $operator
      * @param $index
@@ -364,8 +246,8 @@ class DParser
         $couplet = array_slice($this->numbersStack, $index, 2);
         $couplet[] = $this;
         //remove operator from stack and return corresponding closure
-        $operator = $this->operators[array_splice($this->operatorsStack, $index, 1)[0]['value']];
+        $operator = $this->operatorFactory->operator(array_splice($this->operatorsStack, $index, 1)[0]['value']);
         //replace two operands with one calculated
-        array_splice($this->numbersStack, $index, 2, $operator['exec'](...$couplet));
+        array_splice($this->numbersStack, $index, 2, $operator->execute(...$couplet));
     }
 }
